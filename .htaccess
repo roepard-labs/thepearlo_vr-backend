@@ -1,0 +1,26 @@
+Options -Indexes
+ErrorDocument 404 404.php
+
+# Deny access to .env and other sensitive files
+<FilesMatch "^\.env">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Deny access to .git directory
+<DirectoryMatch "\.git">
+    Order allow,deny
+    Deny from all
+</DirectoryMatch>
+
+# Deny access to config files
+<FilesMatch "\.(ini|log|conf)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+RewriteEngine On
+RewriteCond %{REQUEST_URI} ^/?$
+RewriteRule ^.*$ /404.php [L]
+
+
