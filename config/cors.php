@@ -42,13 +42,20 @@ class CorsHandler {
             
             if (in_array($origin, $originsArray)) {
                 header("Access-Control-Allow-Origin: $origin");
+                // Permitir credenciales cuando no es *
+                header("Access-Control-Allow-Credentials: true");
             } else {
-                // Si el origen no está permitido, usar el primero de la lista
-                header("Access-Control-Allow-Origin: " . $originsArray[0]);
+                // Si el origen no está en la lista, pero allowedOrigins no es vacío
+                // usar el primero de la lista O permitir el origen de todas formas
+                if (!empty($origin)) {
+                    // En desarrollo, permitir el origen aunque no esté en la lista
+                    header("Access-Control-Allow-Origin: $origin");
+                    header("Access-Control-Allow-Credentials: true");
+                } else {
+                    // Sin origen en la petición, usar el primero de la lista
+                    header("Access-Control-Allow-Origin: " . ($originsArray[0] ?? '*'));
+                }
             }
-            
-            // Permitir credenciales cuando no es *
-            header("Access-Control-Allow-Credentials: true");
         }
         
         // Headers permitidos
@@ -60,4 +67,3 @@ class CorsHandler {
 
 // Aplicar CORS automáticamente cuando se incluya este archivo
 CorsHandler::handleCors();
-
