@@ -2,8 +2,10 @@
 require_once __DIR__ . '/../core/db.php';
 require_once __DIR__ . '/../models/UserRegister.php';
 
-class RegisterService {
-    public function register(UserRegister $user) {
+class RegisterService
+{
+    public function register(UserRegister $user)
+    {
         $dbConfig = new DBconfig();
         $db = $dbConfig->getConnection();
 
@@ -27,19 +29,81 @@ class RegisterService {
             return ['status' => 'error', 'message' => 'Email, username or phone already in use.'];
         }
 
-        // Insertar nuevo usuario
-        $query = "INSERT INTO users (first_name, last_name, phone, username, email, password) VALUES (:first_name, :last_name, :phone, :username, :email, :password)";
-        $stmt = $db->prepare($query);
-        $stmt->execute([
-            ':first_name' => $user->first_name,
-            ':last_name' => $user->last_name,
-            ':phone' => $user->phone,
-            ':username' => $user->username,
-            ':email' => $user->email,
-            ':password' => $hashed_password
-        ]);
+        // Iniciar transacción para crear usuario y carpetas
+        $db->beginTransaction();
 
-        $user_id = $db->lastInsertId();
-        return ['status' => 'success', 'message' => 'User registered successfully.', 'user_id' => $user_id];
+        try {
+            // Insertar nuevo usuario
+            $query = "INSERT INTO users (first_name, last_name, phone, username, email, password) VALUES (:first_name, :last_name, :phone, :username, :email, :password)";
+            $stmt = $db->prepare($query);
+            $stmt->execute([
+                ':first_name' => $user->first_name,
+                ':last_name' => $user->last_name,
+                ':phone' => $user->phone,
+                ':username' => $user->username,
+                ':email' => $user->email,
+                ':password' => $hashed_password
+            ]);
+
+            $user_id = $db->lastInsertId();
+
+            // Crear carpetas fijas para el usuario
+            $defaultFolders = [
+                ['name' => 'Documentos', 'description' => 'Documentos y archivos importantes'],
+                ['name' => 'Música', 'description' => 'Archivos de audio y música'],
+                ['name' => 'Videos', 'description' => 'Archivos de video'],
+                ['name' => 'Imágenes', 'description' => 'Fotos e imágenes']
+            ];
+
+            $folderQuery = "INSERT INTO folders (user_id, folder_name, folder_path, description, parent_folder_id) VALUES (:user_id, :folder_name, :folder_path, :description, NULL)";
+            $folderStmt = $db->prepare($folderQuery);
+
+            foreach ($defaultFolders as $folder) {
+                $folderStmt->execute([
+                    ':user_id' => $user_id,
+                    ':folder_name' => $folder['name'],
+                    ':folder_path' => '/' . $folder['name'],
+                    ':description' => $folder['description']
+                ]);
+            }
+
+            // ✅ NUEVO: Crear carpetas físicas en el sistema de archivos
+            require_once __DIR__ . '/StorageService.php';
+            $storageService = new StorageService();
+            
+            $folderNames = array_column($defaultFolders, 'name');
+            $storageResult = $storageService->createUserDirectory($user_id, $folderNames);
+            
+            if ($storageResult['status'] === 'error') {
+                // Si falla la creación física, hacer rollback
+                $db->rollBack();
+                error_log("❌ Error al crear carpetas físicas: " . $storageResult['message']);
+                return [
+                    'status' => 'error',
+                    'message' => 'Error creating user storage structure.'
+                ];
+            }
+
+            // Commit de la transacción
+            $db->commit();
+
+            error_log("✅ Usuario registrado con ID: $user_id - Carpetas BD: " . count($defaultFolders) . " | Carpetas físicas: " . count($storageResult['created_folders']));
+
+            return [
+                'status' => 'success',
+                'message' => 'User registered successfully with default folders.',
+                'user_id' => $user_id,
+                'folders_created' => [
+                    'database' => count($defaultFolders),
+                    'filesystem' => $storageResult['created_folders']
+                ]
+            ];
+
+        } catch (Exception $e) {
+            // Rollback en caso de error
+            $db->rollBack();
+            error_log("❌ Error al registrar usuario: " . $e->getMessage());
+            return ['status' => 'error', 'message' => 'Error creating user account.'];
+        }
     }
 }
