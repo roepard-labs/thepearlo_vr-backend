@@ -132,7 +132,7 @@ try {
     }
 
     // ===================================
-    // OBTENER LAST LOGIN desde user_sessions
+    // OBTENER LAST LOGIN y GÉNERO desde BD
     // ===================================
 
     try {
@@ -155,9 +155,23 @@ try {
         $lastActivityData = $stmtLastActivity->fetch(PDO::FETCH_ASSOC);
         $lastLogin = $lastActivityData ? $lastActivityData['last_activity'] : null;
 
+        // Obtener nombre del género
+        $sqlGender = "SELECT g.gender_name 
+                      FROM users u 
+                      LEFT JOIN genders g ON u.gender_id = g.gender_id 
+                      WHERE u.user_id = :user_id";
+
+        $stmtGender = $db->prepare($sqlGender);
+        $stmtGender->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        $stmtGender->execute();
+
+        $genderData = $stmtGender->fetch(PDO::FETCH_ASSOC);
+        $genderName = $genderData ? $genderData['gender_name'] : 'Prefiero no decirlo';
+
     } catch (PDOException $e) {
-        // Si hay error, usar null
+        // Si hay error, usar valores por defecto
         $lastLogin = null;
+        $genderName = 'Prefiero no decirlo';
     }
 
     // ===================================
@@ -238,6 +252,9 @@ try {
         'first_name' => $userData['first_name'],
         'last_name' => $userData['last_name'],
         'phone' => $userData['phone'] ?? null,
+        'bio' => $userData['bio'] ?? null, // Biografía del usuario
+        'gender_id' => (int) ($userData['gender_id'] ?? 1), // ID del género
+        'gender_name' => $genderName, // Nombre del género
         'role_id' => (int) $userData['role_id'],
         'role_name' => $roleName,
         'status_id' => (int) $userData['status_id'],
