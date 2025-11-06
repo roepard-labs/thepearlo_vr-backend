@@ -246,7 +246,7 @@ try {
         'role_name' => $roleName,
         'status_id' => (int) $userData['status_id'],
         'status_name' => $statusName,
-        'profile_picture' => $userData['profile_picture'] ?? 'default-profile.png',
+        'profile_picture' => $userData['profile_picture'] ?? '/assets/img/default-avatar.png',
         'last_login' => $userData['last_login'] ?? null,
         'member_since' => $memberSince,
         'member_since_days' => $memberSinceDays,

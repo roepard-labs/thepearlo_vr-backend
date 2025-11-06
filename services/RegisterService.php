@@ -33,8 +33,8 @@ class RegisterService
         $db->beginTransaction();
 
         try {
-            // Insertar nuevo usuario
-            $query = "INSERT INTO users (first_name, last_name, phone, username, email, password) VALUES (:first_name, :last_name, :phone, :username, :email, :password)";
+            // Insertar nuevo usuario con foto de perfil por defecto
+            $query = "INSERT INTO users (first_name, last_name, phone, username, email, password, profile_picture) VALUES (:first_name, :last_name, :phone, :username, :email, :password, :profile_picture)";
             $stmt = $db->prepare($query);
             $stmt->execute([
                 ':first_name' => $user->first_name,
@@ -42,7 +42,8 @@ class RegisterService
                 ':phone' => $user->phone,
                 ':username' => $user->username,
                 ':email' => $user->email,
-                ':password' => $hashed_password
+                ':password' => $hashed_password,
+                ':profile_picture' => '/assets/img/default-avatar.png'
             ]);
 
             $user_id = $db->lastInsertId();
