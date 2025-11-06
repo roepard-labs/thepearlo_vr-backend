@@ -115,7 +115,7 @@ class AuthService
                 require_once __DIR__ . '/StorageService.php';
                 $storageService = new StorageService();
                 $createResult = $storageService->createUserDirectory($userId);
-                
+
                 if ($createResult['status'] === 'success' && !empty($createResult['created_folders'])) {
                     error_log("✅ Usuario {$userId}: Estructura de carpetas creada (carpetas físicas creadas: " . implode(', ', $createResult['created_folders']) . ")");
                 }

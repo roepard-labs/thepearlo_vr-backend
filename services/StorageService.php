@@ -344,7 +344,7 @@ class StorageService
             // Crear subcarpetas predeterminadas
             foreach ($folderNames as $folderName) {
                 $folderPath = $userDir . $folderName . '/';
-                
+
                 if (!is_dir($folderPath)) {
                     if (mkdir($folderPath, 0755, true)) {
                         chmod($folderPath, 0755);
@@ -389,7 +389,7 @@ class StorageService
     {
         try {
             $userDir = $this->baseStoragePath . "user_{$userId}/";
-            
+
             // Verificar que el directorio del usuario exista
             if (!is_dir($userDir)) {
                 // Si no existe, crear toda la estructura
@@ -403,7 +403,7 @@ class StorageService
             foreach ($dbFolders as $folder) {
                 $folderName = $folder['folder_name'];
                 $folderPath = $userDir . $folderName . '/';
-                
+
                 if (!is_dir($folderPath)) {
                     if (mkdir($folderPath, 0755, true)) {
                         chmod($folderPath, 0755);

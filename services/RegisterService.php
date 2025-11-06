@@ -70,10 +70,10 @@ class RegisterService
             // ✅ NUEVO: Crear carpetas físicas en el sistema de archivos
             require_once __DIR__ . '/StorageService.php';
             $storageService = new StorageService();
-            
+
             $folderNames = array_column($defaultFolders, 'name');
             $storageResult = $storageService->createUserDirectory($user_id, $folderNames);
-            
+
             if ($storageResult['status'] === 'error') {
                 // Si falla la creación física, hacer rollback
                 $db->rollBack();
