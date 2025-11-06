@@ -204,7 +204,22 @@ try {
     if (!empty($userFields)) {
         $sqlUsers = "UPDATE users SET " . implode(', ', $userFields) . ", updated_at = NOW() WHERE user_id = :user_id";
         $stmtUsers = $db->prepare($sqlUsers);
-        $stmtUsers->execute($userParams);
+
+        if (!$stmtUsers->execute($userParams)) {
+            $db->rollBack();
+            http_response_code(500);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Error al ejecutar actualización de usuarios',
+                'sql_error' => $stmtUsers->errorInfo()
+            ]);
+            exit;
+        }
+    } else {
+        // Si no hay campos de usuario para actualizar, solo actualizar updated_at
+        $sqlUsers = "UPDATE users SET updated_at = NOW() WHERE user_id = :user_id";
+        $stmtUsers = $db->prepare($sqlUsers);
+        $stmtUsers->execute([':user_id' => $userId]);
     }
 
     // ===================================
@@ -307,12 +322,18 @@ try {
         $db->rollBack();
     }
 
+    // Log del error para debugging
+    error_log("Error PDO en up_user.php: " . $e->getMessage());
+    error_log("Datos recibidos: " . json_encode($inputData));
+    error_log("User ID: " . $userId);
+
     // Error de base de datos
     http_response_code(500);
     echo json_encode([
         'status' => 'error',
         'message' => 'Error al actualizar perfil',
-        'details' => $e->getMessage()
+        'details' => $e->getMessage(),
+        'sql_error' => $e->getCode()
     ]);
 } catch (Exception $e) {
     // Revertir transacción en caso de error
@@ -320,12 +341,17 @@ try {
         $db->rollBack();
     }
 
+    // Log del error para debugging
+    error_log("Error general en up_user.php: " . $e->getMessage());
+    error_log("Datos recibidos: " . json_encode($inputData ?? []));
+
     // Error del servidor
     http_response_code(500);
     echo json_encode([
         'status' => 'error',
         'message' => 'Error interno del servidor',
-        'details' => $e->getMessage()
+        'details' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
     ]);
 }
 ?>
