@@ -3,8 +3,10 @@ require_once __DIR__ . '/../services/RegisterService.php';
 require_once __DIR__ . '/../models/UserRegister.php';
 require_once __DIR__ . '/../core/session.php';
 
-class RegisterController {
-    public function register() {
+class RegisterController
+{
+    public function register()
+    {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             echo json_encode(['status' => 'error', 'message' => 'Method not allowed']);
@@ -18,6 +20,13 @@ class RegisterController {
                 echo json_encode(['status' => 'error', 'message' => "Missing required field: $field"]);
                 return;
             }
+        }
+
+        // Validar que el usuario haya aceptado los términos
+        if (!isset($_POST['acceptTerms']) || $_POST['acceptTerms'] !== 'on') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Debes aceptar los Términos y Condiciones para registrarte']);
+            return;
         }
 
         $data = [
