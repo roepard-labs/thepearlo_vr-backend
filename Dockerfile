@@ -1,4 +1,4 @@
-FROM php:8.3-fpm
+FROM php:8.4-fpm
 
 # Instalar todas las dependencias del sistema y extensiones PHP en un solo RUN
 RUN apt-get update && apt-get install -y \
@@ -59,6 +59,8 @@ RUN chmod 750 /var/www/html/config \
 
 # Configurar Nginx
 COPY ./nginx.conf /etc/nginx/sites-available/default
+# Copiar ajustes de PHP para uploads (conf.d snippet)
+COPY ./conf/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
 RUN ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default \
     && rm -f /etc/nginx/sites-enabled/default.conf \
     && rm -f /etc/nginx/conf.d/default.conf
