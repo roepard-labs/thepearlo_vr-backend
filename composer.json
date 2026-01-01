@@ -1,0 +1,16 @@
+{
+    "name": "jemg/thepearlo_vr-backend",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "Jemg\\ThepearloVrBackend\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "thisfeeling",
+            "email": "murksopps@gmail.com"
+        }
+    ],
+    "require": {}
+}
